@@ -18,4 +18,6 @@ COPY --from=base-build /go/bin/cosmovisor /go/bin/go-getter /usr/local/bin
 
 COPY run.sh /run.sh
 
+VOLUME /root/.zetacored/data/
+
 ENTRYPOINT ["/run.sh"]
