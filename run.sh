@@ -6,15 +6,65 @@ if [[ -n $DEBUG ]]; then
   set -x
 fi
 
-# script variables
+# Default script variables with the possibility to override via environment variables
 ZETACHAIN_NETWORK=${ZETACHAIN_NETWORK:-"mainnet"}
 ZETACHAIN_SNAPSHOT_TYPE=${ZETACHAIN_SNAPSHOT_TYPE:-"fullnode"}
-ZETACORED_BINARY_URL=${ZETACORED_BINARY_URL:-}
+ZETACORED_BINARY_URL=${ZETACORED_BINARY_URL:-""}
+DAEMON_ALLOW_DOWNLOAD_BINARIES=${DAEMON_ALLOW_DOWNLOAD_BINARIES:-"true"}
+DAEMON_RESTART_AFTER_UPGRADE=${DAEMON_RESTART_AFTER_UPGRADE:-"true"}
 MY_IP=${MY_IP:-$(curl -s https://checkip.amazonaws.com)}
 
+# Parse command-line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --moniker)
+      MONIKER="$2"
+      shift 2
+      ;;
+    --network)
+      ZETACHAIN_NETWORK="$2"
+      if [[ "$ZETACHAIN_NETWORK" != "mainnet" && "$ZETACHAIN_NETWORK" != "testnet" ]]; then
+        echo "Invalid network: $ZETACHAIN_NETWORK. Allowed values are 'mainnet' or 'testnet'."
+        exit 1
+      fi
+      shift 2
+      ;;
+    --snapshot-type)
+      ZETACHAIN_SNAPSHOT_TYPE="$2"
+      shift 2
+      ;;
+    --binary-url)
+      ZETACORED_BINARY_URL="$2"
+      shift 2
+      ;;
+    --allow-download-binaries)
+      DAEMON_ALLOW_DOWNLOAD_BINARIES="$2"
+      shift 2
+      ;;
+    --restart-after-upgrade)
+      DAEMON_RESTART_AFTER_UPGRADE="$2"
+      shift 2
+      ;;
+    --help)
+      echo "Usage: $0 --moniker MONIKER [--network mainnet|testnet] [--snapshot-type SNAPSHOT_TYPE] [--binary-url URL] [--allow-download-binaries true|false] [--restart-after-upgrade true|false]"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+  esac
+done
+
+# Check required variables
+if [[ -z $MONIKER ]]; then
+  echo '--moniker is required'
+  exit 1
+fi
+
 # cosmovisor variables
-export DAEMON_ALLOW_DOWNLOAD_BINARIES=${DAEMON_ALLOW_DOWNLOAD_BINARIES:-"true"}
-export DAEMON_RESTART_AFTER_UPGRADE=${DAEMON_RESTART_AFTER_UPGRADE:-"true"}
+export DAEMON_ALLOW_DOWNLOAD_BINARIES
+export DAEMON_RESTART_AFTER_UPGRADE
 export DAEMON_NAME="zetacored"
 export DAEMON_HOME="$HOME/.zetacored"
 export UNSAFE_SKIP_BACKUP=true
@@ -22,21 +72,17 @@ export UNSAFE_SKIP_BACKUP=true
 # script constants
 CURL="curl -s -L --fail --retry 5 --retry-delay 2 --retry-max-time 10"
 
-if [[ -z $MONIKER ]]; then
-  echo '$MONIKER is required'
-  exit 1
-fi
-
+# Network configuration
 if [[ "$ZETACHAIN_NETWORK" == "mainnet" ]]; then
   echo "Running mainnet"
-  ZETACHAIN_INIT_API_URL=${ZETACHAIN_INIT_API_URL:-"https://zetachain-mainnet.g.allthatnode.com/archive/rest"}
-  ZETACHAIN_SNAPSHOT_METADATA_URL=${ZETACHAIN_SNAPSHOT_METADATA_URL:-"https://snapshots.rpc.zetachain.com/mainnet/${ZETACHAIN_SNAPSHOT_TYPE}/latest.json"}
-  ZETACHAIN_NETWORK_CONFIG_URL_BASE=${ZETACHAIN_NETWORK_CONFIG_URL_BASE:-"https://raw.githubusercontent.com/zeta-chain/network-config/main/mainnet"}
-elif [[ "$ZETACHAIN_NETWORK" == "testnet" || "$ZETACHAIN_NETWORK" == "athens3" ]]; then
+  ZETACHAIN_INIT_API_URL="https://zetachain-mainnet.g.allthatnode.com/archive/rest"
+  ZETACHAIN_SNAPSHOT_METADATA_URL="https://snapshots.rpc.zetachain.com/mainnet/${ZETACHAIN_SNAPSHOT_TYPE}/latest.json"
+  ZETACHAIN_NETWORK_CONFIG_URL_BASE="https://raw.githubusercontent.com/zeta-chain/network-config/main/mainnet"
+elif [[ "$ZETACHAIN_NETWORK" == "testnet" ]]; then
   echo "Running testnet"
-  ZETACHAIN_INIT_API_URL=${ZETACHAIN_INIT_API_URL:-"https://zetachain-athens.g.allthatnode.com/archive/rest"}
-  ZETACHAIN_SNAPSHOT_METADATA_URL=${ZETACHAIN_SNAPSHOT_METADATA_URL:-"https://snapshots.rpc.zetachain.com/testnet/${ZETACHAIN_SNAPSHOT_TYPE}/latest.json"}
-  ZETACHAIN_NETWORK_CONFIG_URL_BASE=${ZETACHAIN_NETWORK_CONFIG_URL_BASE:-"https://raw.githubusercontent.com/zeta-chain/network-config/main/athens3"}
+  ZETACHAIN_INIT_API_URL="https://zetachain-athens.g.allthatnode.com/archive/rest"
+  ZETACHAIN_SNAPSHOT_METADATA_URL="https://snapshots.rpc.zetachain.com/testnet/${ZETACHAIN_SNAPSHOT_TYPE}/latest.json"
+  ZETACHAIN_NETWORK_CONFIG_URL_BASE="https://raw.githubusercontent.com/zeta-chain/network-config/main/athens3"
 else 
   echo "Invalid network"
   exit 1
