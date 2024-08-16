@@ -11,6 +11,8 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/zetacored
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -43,4 +45,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           provenance: mode=max
-          tags: "ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:${{ env.VERSION }}"
+          tags: "${{ env.IMAGE }}:${{ env.VERSION }}"
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
