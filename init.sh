@@ -13,7 +13,7 @@ ZETACORED_BINARY_URL=${ZETACORED_BINARY_URL:-}
 MY_IP=${MY_IP:-$(curl -s https://checkip.amazonaws.com)}
 
 # script constants
-CURL="curl -s -L --fail --retry 5 --retry-delay 2 --retry-max-time 10"
+CURL="curl -s -L --fail --retry 5 --retry-delay 2 --retry-max-time 10 -C -"
 
 if [[ -z $MONIKER ]]; then
   echo '$MONIKER is required'
