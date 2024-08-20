@@ -1,0 +1,77 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/zetacored
+    outputs:
+      IMAGE: ${{ fromJson(steps.build.outputs.metadata)['image.name'] }}
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Generate version
+        run: |
+          # Default tag as commit SHA
+          VERSION=${GITHUB_SHA::7}
+          # Use tag name if it's a tag push
+          if [ "$GITHUB_EVENT_NAME" == "push" ] && [ "$GITHUB_REF_TYPE" == "tag" ]; then
+            VERSION=${GITHUB_REF_NAME}
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: mode=max
+          tags: "${{ env.IMAGE_BASE }}:${{ env.VERSION }}"
+          cache-from: type=registry,ref=${{ env.IMAGE_BASE }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE_BASE }}:buildcache,mode=max
+  test:
+    runs-on: buildjet-4vcpu-ubuntu-2204
+    needs: build
+    timeout-minutes: 45
+    steps:
+      - name: Start container
+        run: docker run -d --name zetacored -p 8545:8545 -e MONIKER=$(uuidgen) ${{ needs.build.outputs.IMAGE }}
+      - name: Wait for healthy
+        run: |
+          while ! curl -s -f -X POST --data '{\"jsonrpc\":\"2.0\",\"method\":\"web3_clientVersion\",\"params\":[],\"id\":67}' -H 'Content-Type: application/json' http://localhost:8545; do
+            if ! docker ps | grep zetacored; then
+              echo "Container stopped?"
+              exit 1
+            fi
+            df -h /
+            echo "waiting for zetacored health"
+            sleep 15
+          done
+      - name: Dump logs
+        if: always()
+        run: docker logs zetacored
+
