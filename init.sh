@@ -56,6 +56,9 @@ download_configs() {
     $CURL -o .zetacored/config/config.toml "${ZETACHAIN_NETWORK_CONFIG_URL_BASE}/config.toml"
     sed -i -e "s/^moniker = .*/moniker = \"${MONIKER}\"/" .zetacored/config/config.toml
   fi
+  if [[ ! -f .zetacored/config/client.toml ]]; then
+    $CURL -o .zetacored/config/client.toml "${ZETACHAIN_NETWORK_CONFIG_URL_BASE}/client.toml"
+  fi
   if [[ ! -f .zetacored/config/genesis.json ]]; then
     $CURL -o .zetacored/config/genesis.json "${ZETACHAIN_NETWORK_CONFIG_URL_BASE}/genesis.json"
   fi
