@@ -59,7 +59,7 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          target: base
+          target: snapshotter
           provenance: mode=max
           tags: "${{ env.IMAGE_BASE }}:${{ env.VERSION }}-snapshotter"
           cache-from: type=registry,ref=${{ env.IMAGE_BASE }}:buildcache
