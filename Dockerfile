@@ -2,6 +2,7 @@ FROM golang:1.22.5-bookworm AS base-build
 
 RUN go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@v1.5.0
 RUN go install github.com/hashicorp/go-getter/cmd/go-getter@v1.7.6
+RUN go install github.com/zeta-chain/dl-pipe/cmd/dl-pipe@latest
 
 FROM debian:bookworm AS base
 
@@ -14,7 +15,7 @@ RUN apt update && \
     apt install -y ca-certificates curl jq && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=base-build /go/bin/cosmovisor /go/bin/go-getter /usr/local/bin
+COPY --from=base-build /go/bin/cosmovisor /go/bin/go-getter /go/bin/dl-pipe /usr/local/bin
 
 COPY run.sh init.sh /
 

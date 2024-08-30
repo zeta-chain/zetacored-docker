@@ -89,7 +89,7 @@ install_genesis_zetacored() {
 restore_snapshot() {
   snapshot_link=$($CURL "${ZETACHAIN_SNAPSHOT_METADATA_URL}" | jq -r '.snapshots[0].link')
   echo "Restoring snapshot from ${snapshot_link}"
-  $CURL "$snapshot_link" | tar x -C $HOME/.zetacored
+  dl-pipe "$snapshot_link" | tar x -C $HOME/.zetacored
 }
 
 cd $HOME
