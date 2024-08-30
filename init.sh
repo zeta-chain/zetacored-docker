@@ -95,9 +95,12 @@ install_genesis_zetacored() {
 }
 
 restore_snapshot() {
-  snapshot_link=$($CURL "${ZETACHAIN_SNAPSHOT_METADATA_URL}" | jq -r '.snapshots[0].link')
+  snapshot=$($CURL "${ZETACHAIN_SNAPSHOT_METADATA_URL}" | jq -r '.snapshots[0]')
+  snapshot_link=$(echo "$snapshot" | jq -r '.link')
+  snapshot_md5=$(echo "$snapshot" | jq -r '.checksums.md5')
   echo "Restoring snapshot from ${snapshot_link}"
-  dl-pipe "$snapshot_link" | tar x -C $HOME/.zetacored
+  # https://github.com/zeta-chain/dl-pipe
+  dl-pipe -hash "md5:${snapshot_md5}" "$snapshot_link" | tar x -C $HOME/.zetacored
 }
 
 cd $HOME
