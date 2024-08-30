@@ -66,6 +66,14 @@ download_configs() {
 
 install_genesis_zetacored() {
   echo "Installing genesis zetacored"
+
+  # create the genesis bin path and symlink it to the current path
+  genesis_path=".zetacored/cosmovisor/genesis"
+  mkdir -p "$genesis_path"
+  mkdir -p "${genesis_path}/bin"
+  current_path=".zetacored/cosmovisor/current"
+  ln -s "${HOME}/${genesis_path}" "${HOME}/${current_path}"
+
   if [[ -z $ZETACORED_BINARY_URL ]]; then
     max_height=$($CURL "${ZETACHAIN_SNAPSHOT_METADATA_URL}" | jq -r '.snapshots[0].height')
     echo "Getting latest passed upgrade plan before ${max_height}"

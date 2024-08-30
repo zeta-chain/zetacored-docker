@@ -6,9 +6,6 @@ RUN go install github.com/zeta-chain/dl-pipe/cmd/dl-pipe@latest
 
 FROM debian:bookworm AS base
 
-RUN mkdir -p /root/.zetacored/cosmovisor/genesis/bin && \
-    ln -s /root/.zetacored/cosmovisor/genesis /root/.zetacored/cosmovisor/current
-
 ENV PATH=/root/.zetacored/cosmovisor/current/bin/:${PATH}
 
 RUN apt update && \
