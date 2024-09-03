@@ -111,12 +111,12 @@ if [[ -f /root/init_started && ! -f /root/init_completed ]]; then
 fi
 
 touch /root/init_started
-if [[ ! -f /root/init_complete ]]; then
+if [[ ! -f /root/init_completed ]]; then
   echo "Starting initialization"
   download_configs
   install_genesis_zetacored
   restore_snapshot
-  touch /root/init_complete
+  touch /root/init_completed
 else 
   echo "Initialization already completed"
 fi
