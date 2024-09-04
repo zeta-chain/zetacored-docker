@@ -16,8 +16,6 @@ COPY --from=base-build /go/bin/cosmovisor /go/bin/go-getter /go/bin/dl-pipe /usr
 
 COPY run.sh init.sh /
 
-VOLUME /root/.zetacored/data/
-
 ENTRYPOINT ["/run.sh"]
 
 FROM base AS snapshotter
