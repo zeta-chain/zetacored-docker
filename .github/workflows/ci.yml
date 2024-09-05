@@ -85,4 +85,23 @@ jobs:
       - name: Dump logs
         if: always()
         run: docker logs zetacored
+      - name: Ensure we can restart
+        run: |
+          docker stop zetacored
+          docker start zetacored
+      - name: Wait for healthy
+        run: |
+          while ! curl -s -f --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":67}' -H 'Content-Type: application/json' http://localhost:8545; do
+            if ! docker ps | grep zetacored; then
+              echo "Container stopped?"
+              exit 1
+            fi
+            df -h /
+            echo "waiting for zetacored health"
+            sleep 15
+          done
+      - name: Dump logs (restart)
+        if: always()
+        run: docker logs --since 1m zetacored
+
 
