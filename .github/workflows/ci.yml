@@ -59,7 +59,7 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          target: base
+          target: snapshotter
           provenance: mode=max
           tags: "${{ env.IMAGE_BASE }}:${{ env.VERSION }}-snapshotter"
           cache-from: type=registry,ref=${{ env.IMAGE_BASE }}:buildcache
@@ -70,7 +70,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Start container
-        run: docker run -d --name zetacored -p 8545:8545 -e MONIKER=$(uuidgen) ${{ needs.build.outputs.IMAGE }}
+        run: docker run -d --name zetacored -p 8545:8545 -e MONIKER=$(uuidgen) -e ZETACHAIN_NETWORK=testnet ${{ needs.build.outputs.IMAGE }}
       - name: Wait for healthy
         run: |
           while ! curl -s -f --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":67}' -H 'Content-Type: application/json' http://localhost:8545; do
@@ -85,4 +85,23 @@ jobs:
       - name: Dump logs
         if: always()
         run: docker logs zetacored
+      - name: Ensure we can restart
+        run: |
+          docker stop zetacored
+          docker start zetacored
+      - name: Wait for healthy
+        run: |
+          while ! curl -s -f --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":67}' -H 'Content-Type: application/json' http://localhost:8545; do
+            if ! docker ps | grep zetacored; then
+              echo "Container stopped?"
+              exit 1
+            fi
+            df -h /
+            echo "waiting for zetacored health"
+            sleep 15
+          done
+      - name: Dump logs (restart)
+        if: always()
+        run: docker logs --since 1m zetacored
+
 

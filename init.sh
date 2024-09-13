@@ -66,6 +66,14 @@ download_configs() {
 
 install_genesis_zetacored() {
   echo "Installing genesis zetacored"
+
+  # create the genesis bin path and symlink it to the current path
+  genesis_path=".zetacored/cosmovisor/genesis"
+  mkdir -p "$genesis_path"
+  mkdir -p "${genesis_path}/bin"
+  current_path=".zetacored/cosmovisor/current"
+  ln -s "${HOME}/${genesis_path}" "${HOME}/${current_path}"
+
   if [[ -z $ZETACORED_BINARY_URL ]]; then
     max_height=$($CURL "${ZETACHAIN_SNAPSHOT_METADATA_URL}" | jq -r '.snapshots[0].height')
     echo "Getting latest passed upgrade plan before ${max_height}"
@@ -87,9 +95,12 @@ install_genesis_zetacored() {
 }
 
 restore_snapshot() {
-  snapshot_link=$($CURL "${ZETACHAIN_SNAPSHOT_METADATA_URL}" | jq -r '.snapshots[0].link')
+  snapshot=$($CURL "${ZETACHAIN_SNAPSHOT_METADATA_URL}" | jq -r '.snapshots[0]')
+  snapshot_link=$(echo "$snapshot" | jq -r '.link')
+  snapshot_md5=$(echo "$snapshot" | jq -r '.checksums.md5')
   echo "Restoring snapshot from ${snapshot_link}"
-  $CURL "$snapshot_link" | tar x -C $HOME/.zetacored
+  # https://github.com/zeta-chain/dl-pipe
+  dl-pipe -hash "md5:${snapshot_md5}" "$snapshot_link" | tar x -C $HOME/.zetacored
 }
 
 cd $HOME
@@ -100,12 +111,12 @@ if [[ -f /root/init_started && ! -f /root/init_completed ]]; then
 fi
 
 touch /root/init_started
-if [[ ! -f /root/init_complete ]]; then
+if [[ ! -f /root/init_completed ]]; then
   echo "Starting initialization"
   download_configs
   install_genesis_zetacored
   restore_snapshot
-  touch /root/init_complete
+  touch /root/init_completed
 else 
   echo "Initialization already completed"
 fi
