@@ -23,7 +23,7 @@ FROM base AS snapshotter
 ARG TARGETARCH
 
 RUN apt update && \
-    apt install -y rclone procps && \
+    apt install -y rclone procps lz4 && \
     rm -rf /var/lib/apt/lists/*
 
 RUN ARCH=$( [ "$TARGETARCH" = "amd64" ] && echo "x86_64" || echo "$TARGETARCH" ) && \
