@@ -9,7 +9,7 @@ FROM debian:bookworm AS base
 ENV PATH=/root/.zetacored/cosmovisor/current/bin/:${PATH}
 
 RUN apt update && \
-    apt install -y ca-certificates curl jq && \
+    apt install -y ca-certificates curl jq lz4 && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=base-build /go/bin/cosmovisor /go/bin/go-getter /go/bin/dl-pipe /usr/local/bin
