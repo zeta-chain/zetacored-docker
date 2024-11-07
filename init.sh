@@ -30,7 +30,7 @@ elif [[ "$ZETACHAIN_NETWORK" == "testnet" || "$ZETACHAIN_NETWORK" == "athens3" ]
   ZETACHAIN_INIT_API_URL=${ZETACHAIN_INIT_API_URL:-"https://zetachain-athens.g.allthatnode.com/archive/rest"}
   ZETACHAIN_SNAPSHOT_METADATA_URL=${ZETACHAIN_SNAPSHOT_METADATA_URL:-"https://snapshots.rpc.zetachain.com/testnet/${ZETACHAIN_SNAPSHOT_TYPE}/latest.json"}
   ZETACHAIN_NETWORK_CONFIG_URL_BASE=${ZETACHAIN_NETWORK_CONFIG_URL_BASE:-"https://raw.githubusercontent.com/zeta-chain/network-config/main/athens3"}
-else 
+else
   echo "Invalid network"
   exit 1
 fi
@@ -81,7 +81,7 @@ install_genesis_zetacored() {
       .proposals[] |
       select(.status == "PROPOSAL_STATUS_PASSED") |
       .messages[] |
-      select(."@type" == "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade" and (.plan.height | 
+      select(."@type" == "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade" and (.plan.height |
       tonumber < $max_height))' | jq -s '.[0]' | tee /tmp/init-upgrade-plan.json
 
     ZETACORED_BINARY_URL=$(jq -r '.plan.info' /tmp/init-upgrade-plan.json | jq -r ".binaries[\"linux/$GOARCH\"]")
@@ -100,7 +100,11 @@ restore_snapshot() {
   snapshot_md5=$(echo "$snapshot" | jq -r '.checksums.md5')
   echo "Restoring snapshot from ${snapshot_link}"
   # https://github.com/zeta-chain/dl-pipe
-  dl-pipe -hash "md5:${snapshot_md5}" "$snapshot_link" | tar x -C $HOME/.zetacored
+  decompress_args=""
+  if [[ "$snapshot_link" == *"lz4"* ]]; then
+    decompress_args="-I lz4"
+  fi
+  dl-pipe -hash "md5:${snapshot_md5}" "$snapshot_link" | tar $decompress_args -x -C $HOME/.zetacored
 }
 
 cd $HOME
@@ -117,7 +121,7 @@ if [[ ! -f /root/init_completed ]]; then
   install_genesis_zetacored
   restore_snapshot
   touch /root/init_completed
-else 
+else
   echo "Initialization already completed"
 fi
 
