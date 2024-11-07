@@ -100,11 +100,11 @@ restore_snapshot() {
   snapshot_md5=$(echo "$snapshot" | jq -r '.checksums.md5')
   echo "Restoring snapshot from ${snapshot_link}"
   # https://github.com/zeta-chain/dl-pipe
-decompress_args=""
-  if [[ "$snapshot_link" == *"lz4"* ]]; then
-      decompress_args="-I lz4"
-  fi
-  dl-pipe -hash "md5:${snapshot_md5}" "$snapshot_link" | tar $decompress_args -x -C $HOME/.zetacored
+  decompress_args=""
+    if [[ "$snapshot_link" == *"lz4"* ]]; then
+        decompress_args="-I lz4"
+    fi
+    dl-pipe -hash "md5:${snapshot_md5}" "$snapshot_link" | tar $decompress_args -x -C $HOME/.zetacored
 }
 
 cd $HOME
