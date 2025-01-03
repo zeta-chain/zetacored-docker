@@ -117,7 +117,6 @@ restore_snapshot() {
   fi
 }
 
-
 cd $HOME
 
 if [[ -f /root/init_started && ! -f /root/init_completed ]]; then
