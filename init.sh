@@ -96,15 +96,25 @@ install_genesis_zetacored() {
 
 restore_snapshot() {
   snapshot=$($CURL "${ZETACHAIN_SNAPSHOT_METADATA_URL}" | jq -r '.snapshots[0]')
-  snapshot_link=$(echo "$snapshot" | jq -r '.link')
-  snapshot_md5=$(echo "$snapshot" | jq -r '.checksums.md5')
-  echo "Restoring snapshot from ${snapshot_link}"
-  # https://github.com/zeta-chain/dl-pipe
-  decompress_args=""
-  if [[ "$snapshot_link" == *"lz4"* ]]; then
-    decompress_args="-I lz4"
+  snapshot_type=$(echo "$snapshot" | jq -r '.filename' | grep -q "archive" && echo "archive" || echo "fullnode")
+
+  if [[ "$snapshot_type" == "archive" ]]; then
+    # handle multipart archive snapshots
+    links=$(echo "$snapshot" | jq -r '.links[]')
+    checksum=$(echo "$snapshot" | jq -r '.fullFileChecksum')
+    dl-pipe -progress -hash "sha256:$checksum" "$links" | tar x
+  else
+    echo "Restoring fullnode snapshot"
+    snapshot_link=$(echo "$snapshot" | jq -r '.link')
+    snapshot_md5=$(echo "$snapshot" | jq -r '.checksums.md5')
+    decompress_args=""
+    if [[ "$snapshot_link" == *"lz4"* ]]; then
+      decompress_args="-I lz4"
+    fi
+
+    echo "Downloading and extracting snapshot from ${snapshot_link}"
+    dl-pipe -hash "md5:${snapshot_md5}" "$snapshot_link" | tar "$decompress_args" -x -C "$HOME/.zetacored"
   fi
-  dl-pipe -hash "md5:${snapshot_md5}" "$snapshot_link" | tar $decompress_args -x -C $HOME/.zetacored
 }
 
 cd $HOME
