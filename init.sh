@@ -67,13 +67,6 @@ download_configs() {
 install_genesis_zetacored() {
   echo "Installing genesis zetacored"
 
-  # create the genesis bin path and symlink it to the current path
-  genesis_path=".zetacored/cosmovisor/genesis"
-  mkdir -p "$genesis_path"
-  mkdir -p "${genesis_path}/bin"
-  current_path=".zetacored/cosmovisor/current"
-  ln -s "${HOME}/${genesis_path}" "${HOME}/${current_path}"
-
   if [[ -z $ZETACORED_BINARY_URL ]]; then
     max_height=$($CURL "${ZETACHAIN_SNAPSHOT_METADATA_URL}" | jq -r '.snapshots[0].height')
     echo "Getting latest passed upgrade plan before ${max_height}"
@@ -87,8 +80,16 @@ install_genesis_zetacored() {
     ZETACORED_BINARY_URL=$(jq -r '.plan.info' /tmp/init-upgrade-plan.json | jq -r ".binaries[\"linux/$GOARCH\"]")
   fi
   # go-getter will verify the checksum of the downloaded binary
-  go-getter --mode file "$ZETACORED_BINARY_URL" .zetacored/cosmovisor/genesis/bin/zetacored
-  chmod +x .zetacored/cosmovisor/genesis/bin/zetacored
+  go-getter --mode file "$ZETACORED_BINARY_URL" /tmp/zetacored
+  chmod +x /tmp/zetacored
+
+  upgrades_path=.zetacored/cosmovisor/upgrades/$(/tmp/zetacored upgrade-handler-version)
+  upgrades_bin_path="${upgrades_path}/bin/"
+  mkdir -p $upgrades_bin_path
+  mv /tmp/zetacored $upgrades_bin_path
+
+  ln -sf "${HOME}/$upgrades_path" "${HOME}/.zetacored/cosmovisor/genesis"
+  ln -sf "${HOME}/$upgrades_path" "${HOME}/.zetacored/cosmovisor/current"
 
   # run the zetacored version to ensure it's the correct architecture, glibc version, and is in PATH
   zetacored version
