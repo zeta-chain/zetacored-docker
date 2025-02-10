@@ -70,7 +70,14 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Start container
-        run: docker run -d --name zetacored -p 8545:8545 -e MONIKER=$(uuidgen) -e ZETACHAIN_NETWORK=testnet ${{ needs.build.outputs.IMAGE }}
+        run: |
+          docker run -d \
+            --name zetacored \
+            -p 8545:8545 \
+            -e MONIKER=$(uuidgen) \
+            -e ZETACHAIN_NETWORK=testnet \
+            -e VERSION_OVERRIDE_v27=https://github.com/zeta-chain/node/releases/download/v27.0.4/zetacored-linux-amd64 \
+            ${{ needs.build.outputs.IMAGE }}
       - name: Wait for healthy
         run: |
           while ! curl -s -f --data '{"jsonrpc":"2.0","method":"web3_clientVersion","params":[],"id":67}' -H 'Content-Type: application/json' http://localhost:8545; do

@@ -15,5 +15,9 @@ export DAEMON_NAME="zetacored"
 export DAEMON_HOME="$HOME/.zetacored"
 export UNSAFE_SKIP_BACKUP=true
 
+# apply any version overrides
+# these should run on every start the version can change at any time
+/apply_version_overrides.sh
+
 # shellcheck disable=SC2068
 exec cosmovisor run start --moniker "$MONIKER" $@
