@@ -14,7 +14,7 @@ RUN apt update && \
 
 COPY --from=base-build /go/bin/cosmovisor /go/bin/go-getter /go/bin/dl-pipe /usr/local/bin
 
-COPY run.sh init.sh /
+COPY run.sh init.sh apply_version_overrides.sh /
 
 ENTRYPOINT ["/run.sh"]
 
