@@ -1,6 +1,6 @@
 FROM golang:1.23.3-bookworm AS base-build
 
-RUN go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@v1.7.0
+RUN go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@f072ecaba61468d7bad864b92721116f72d4e8a6
 RUN go install github.com/hashicorp/go-getter/cmd/go-getter@v1.7.6
 RUN go install github.com/zeta-chain/dl-pipe/cmd/dl-pipe@dd55028ca122ad2577185ae0a5f5e95cd427ccdd
 
