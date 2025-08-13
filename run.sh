@@ -20,4 +20,4 @@ export UNSAFE_SKIP_BACKUP=true
 /apply_version_overrides.sh
 
 # shellcheck disable=SC2068
-exec cosmovisor run start --moniker "$MONIKER" $@
+exec cosmovisor run start --evm.evm-chain-id 7001 --moniker "$MONIKER" $@
