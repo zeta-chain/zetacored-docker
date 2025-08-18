@@ -13,3 +13,7 @@ VERSION_OVERRIDE_v27=https://github.com/zeta-chain/node/releases/download/v27.0.
 ```
 
 The old version will be ran if the download of this file changes.
+
+## License
+
+MIT. See the LICENSE file for details.
