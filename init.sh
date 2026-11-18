@@ -70,12 +70,13 @@ install_genesis_zetacored() {
   if [[ -z $ZETACORED_BINARY_URL ]]; then
     max_height=$($CURL "${ZETACHAIN_SNAPSHOT_METADATA_URL}" | jq -r '.snapshots[0].height')
     echo "Getting latest passed upgrade plan before ${max_height}"
-    $CURL "${ZETACHAIN_INIT_API_URL}/cosmos/gov/v1/proposals?pagination.reverse=true" | jq --arg max_height "$max_height" '
+    $CURL "${ZETACHAIN_INIT_API_URL}/cosmos/gov/v1/proposals?pagination.reverse=true" | jq --argjson max_height "$max_height" '
       .proposals[] |
       select(.status == "PROPOSAL_STATUS_PASSED") |
       .messages[] |
-      select(."@type" == "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade" and (.plan.height |
-      tonumber < $max_height))' | jq -s '.[0]' | tee /tmp/init-upgrade-plan.json
+      select(."@type" == "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade" and
+        (.plan.height | tonumber) < $max_height and
+        ((.plan.info | fromjson? | .binaries) != null))' | jq -s '.[0]' | tee /tmp/init-upgrade-plan.json
 
     ZETACORED_BINARY_URL=$(jq -r '.plan.info' /tmp/init-upgrade-plan.json | jq -r ".binaries[\"linux/$GOARCH\"]")
   fi
